@@ -7,7 +7,10 @@
     --primary5: #C7A421;
     --primary6: #A0810E;
     --primary7: #F6D55A;
-    --secondary-color: #8B81CA;
+    --secondary1: #8B81CA;
+    --secondary2: #6458AE;
+    --secondary3: #4A3D9B;
+    --secondary4: #23176F;
 }
 
 body {
@@ -23,19 +26,6 @@ body {
     align-items: center;
 }
 
-#equals {
-    background-color: #8B81CA ;
-    color: #23176F;
-    border-color: #4A3D9B;
-}
-
-#square, #root, #delete, #deleteAll,
-#plus, #minus, #multiply, #divide {
-    background-color: var(--primary7) ;
-    color: var(--primary6);
-    border-color: var(--primary5);
-}
-
 button {
     background-color: var(--primary3) ;
     color: var(--primary6);
@@ -48,12 +38,12 @@ button {
 }
 
 button:hover {
-    background-color: var(--primary5);
+    background-color: var(--primary1);
     color: var(--primary3);
 }
 
 button:active {
-    background-color: var(--primary6);
+    background-color: var(--primary5);
 }
 
 header {
@@ -70,7 +60,7 @@ h1 {
 
 .main-container {
     background-color: var(--primary2);
-    min-width: 27rem;
+    min-width: 28rem;
     border-radius: 1.4rem;
     margin-bottom: 1rem;
     padding: 0.85rem;
@@ -81,7 +71,7 @@ h1 {
 }
 
 .screen-container {
-    background-color: var(--secondary-color);
+    background-color: var(--secondary1);
     color: white;
     text-align: end;
     padding: 0.4rem 1rem 0 1rem;
@@ -90,7 +80,7 @@ h1 {
 
 .history {
     font-size: 1.5rem;
-    
+    min-height: 1.75rem;
 }
 
 .current {
@@ -105,12 +95,32 @@ h1 {
 }
 
 #equals {
+    background-color: var(--secondary1);
+    color: var(--secondary4);
+    border-color: var(--secondary2);
     grid-column: 4 / span 1;
     grid-row: 3 / span 4;
 }
 
-.color-complement-0 { color: #4A3D9B }	/* Main Complement color */
-.color-complement-1 { color: #8B81CA }
-.color-complement-2 { color: #6458AE }
-.color-complement-3 { color: #34268A }
-.color-complement-4 { color: #23176F }
+#equals:hover {
+    background-color: var(--secondary2);
+    color: var(--secondary1);
+}
+#equals:active {
+    background-color: var(--secondary3);
+}
+
+.func {
+    background-color: var(--primary7) ;
+    color: var(--primary6);
+    border-color: var(--primary5);
+}
+
+.func:hover {
+    background-color: var(--primary5);
+    color: var(--primary3);
+}
+
+.func:active {
+    background-color: var(--primary6);
+}
