@@ -12,12 +12,12 @@
     <header><h1>Calculator Lite</h1></header>
     <div class="main-container">
         <div class="screen-container">
-            <div class="screen history">5</div>
+            <div class="screen history"></div>
             <div class="screen current">0</div>
         </div>
         <div class="keyboard">
-            <button id="square" class="operator func">x<sup>2</sup></button>
-            <button id="root" class="operator func">&radic;x</button>
+            <button id="square" class="operator func unary">x<sup>2</sup></button>
+            <button id="root" class="operator func unary">&radic;x</button>
             <button id="delete" class="func">C</button>
             <button id="deleteAll" class="func">CA</button>
             <button id="add" class="operator func">+</button>
@@ -34,10 +34,11 @@
             <button class="number" data-num = "1">1</button>
             <button class="number" data-num = "2">2</button>
             <button class="number" data-num = "3">3</button>
-            <button id="changeSign" class="operator func">&plusmn;</button>
+            <button id="changeSign" class="operator func unary">&plusmn;</button>
             <button class="number" data-num = "0">0</button>
             <button id="dot">.</button>
         </div>
     </div>
+    <footer>Copyright &copy; Maryna Snihurska aka RinaSatsu (for The Odin Project) 2023</footer>
 </body>
 </html>
