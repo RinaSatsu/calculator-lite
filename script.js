@@ -21,7 +21,7 @@ const Calculator = {
 const View = {
 	disabled: false,
 	float: false,
-	cumulative: false,
+	negativeSign: false,
 	screen: document.querySelectorAll('.screen'),
 	screenCurrent: document.querySelector('.current'),
 	screenHistory: document.querySelector('.history'),
@@ -49,56 +49,44 @@ const View = {
 	},
 
 	onOperatorClick(event) {
-		if (event.target.id === 'equals') {
-			View.disabled = false;
-			View.float = false;
-			View.cumulative = false;
-			let num = View.screenCurrent.textContent;
-			Controller.saveNumber(parseFloat(num));
-			let resStr = View.roundUp(Controller.getResult());
-			View.screenCurrent.textContent = resStr;
-			View.screenHistory.textContent += num + '=';
-		} else if (event.target.classList.contains('unary')) {
-			View.disabled = false;
-			View.float = false;
-			View.cumulative = false;
-			let num = View.screenCurrent.textContent;
-			Controller.saveNumber(parseFloat(num), event.target.id);
-			//View.screenCurrent.textContent = Controller.getResult();
-			let histStr = num;
-			switch (event.target.id) {
-				case 'square':
-					histStr += '<sup>2</sup>';
-					break;
-				case 'root':
-					histStr = '&radic;' + histStr;
-					break;
-				default:
-					break;
-			}
-			View.screenHistory.innerHTML = histStr;
-		} else {
-		//binary
-		//unary
-		View.disabled = false;
-		View.float = false;
-		View.cumulative = true;
-		let num = View.screenCurrent.textContent;
-		Controller.saveNumber(parseFloat(num), event.target.id);
-		View.screenCurrent.textContent = '0';
-		View.screenHistory.textContent = num + event.target.textContent;
-		}
+		View.operate(event.target);
 	},
 
+	//	refactor because this is horrible
 	onEqualsClick() {
-		View.disabled = false;
-		View.float = false;
-		View.cumulative = false;
-		let num = View.screenCurrent.textContent;
-		Controller.saveNumber(parseFloat(num));
-		let resStr = View.roundUp(Controller.getResult());
-		View.screenCurrent.textContent = resStr;
-		View.screenHistory.textContent += num + '=';
+		if (Controller.currentOperation === undefined) {
+			return;
+		}
+		if (View.screenHistory.textContent.includes('=')) {
+			if (Controller.currentOperation.classList.contains('unary')) {
+				View.screenHistory.textContent = View.screenCurrent.textContent;
+				View.screenHistory.textContent += '=';
+				return;
+			}
+			let num = View.screenCurrent.textContent;
+			Controller.saveNumber(parseFloat(num), Controller.currentOperation);
+
+			let resStr = View.roundUp(Controller.getResult());
+			View.float = resStr.includes('e');
+			View.negativeSign = resStr[0] === '-';
+			View.disabled = resStr.length === (10 + View.float + View.negativeSign);
+
+			View.screenHistory.textContent = View.screenCurrent.textContent;
+			View.screenHistory.textContent += Controller.currentOperation.textContent + Controller.getB();
+			View.screenHistory.textContent += '=';
+			View.screenCurrent.textContent = resStr;
+		} else {
+			let num = View.screenCurrent.textContent;
+			Controller.saveNumber(parseFloat(num));
+
+			let resStr = View.roundUp(Controller.getResult());
+			View.float = resStr.includes('e');
+			View.negativeSign = resStr[0] === '-';
+			View.disabled = resStr.length === (10 + View.float + View.negativeSign);
+
+			View.screenCurrent.textContent = resStr;
+			View.screenHistory.textContent += num + '=';
+		}
 	},
 
 
@@ -111,9 +99,12 @@ const View = {
 		}
 		View.screenCurrent.textContent = View.screenCurrent.textContent.slice(0, -1);
 		View.disabled = false;
+		if (View.screenCurrent.textContent.length === 0 ) {
+			View.screenCurrent.textContent = '0';
+		}
+		//	replace slice so that you don't have to do all these checks
 		//	add operator delete logic
-		//	add e delete logic?
-		// e and negative notation
+		//	add delete previous operations (if you have complete operation, delete history instead of current)
 	},
 
 	onDeleteAll() {
@@ -121,7 +112,8 @@ const View = {
 		View.screenHistory.textContent = '';
 		View.disabled = false;
 		View.float = false;
-		View.cumulative = false;
+		View.negativeSign = false;
+		Controller.currentOperation = undefined;
 	},
 
 	onNumClick(event) {
@@ -130,7 +122,7 @@ const View = {
 		}
 		if (View.screenCurrent.textContent === '0') {
 			View.screenCurrent.textContent = `${event.target.dataset.num}`;
-		} else if (View.screenCurrent.textContent.length === (10 + View.float)) {
+		} else if (View.screenCurrent.textContent.length === (10 + View.float + View.negativeSign)) {
 			View.disabled = true;
 		} else {
 			View.screenCurrent.textContent += `${event.target.dataset.num}`;
@@ -146,7 +138,9 @@ const View = {
 	},
 
 	roundUp(num) {
-		if ((num >= 1e10) || (num <= -1e10)) {
+		if (num == 0) {
+			return '0';
+		} else if ((num >= 1e10) || (num <= -1e10)) {
 			return num.toPrecision(6);
 		} else if ((num < 1) && (num > -1)) {
 			if ((num < 1e-9) && (num > -1e-9)) {
@@ -156,6 +150,55 @@ const View = {
 			}
 		}
 		return num.toPrecision(10).replace(/(?:\.0+|(\.\d+?)0+)$/, "$1");
+	},
+
+	//also refactor because wtf??
+	operate(operation) {
+		if (operation.id === 'equals') {
+			View.disabled = false;
+			let num = View.screenCurrent.textContent;
+			Controller.saveNumber(parseFloat(num));
+			let resStr = View.roundUp(Controller.getResult());
+			
+			View.float = resStr.includes('e');
+			View.negativeSign = resStr[0] === '-';
+			View.disabled = resStr.length === (10 + View.float + View.negativeSign);
+
+			View.screenCurrent.textContent = resStr;
+			View.screenHistory.textContent += num + '=';
+		} else if (operation.id === 'changeSign') {
+			let num = View.screenCurrent.textContent;
+			Controller.saveNumber(parseFloat(num), operation); //here
+			View.negativeSign = !(View.negativeSign);
+			View.screenCurrent.textContent = View.roundUp(Controller.getResult());;
+		} else if (operation.classList.contains('unary')) {
+			let num = View.screenCurrent.textContent;
+			Controller.saveNumber(parseFloat(num), operation); //here
+			let histStr = num;
+			switch (operation.id) {
+				case 'square':
+					histStr += '<sup>2</sup>';
+					break;
+				case 'root':
+					histStr = '&radic;' + histStr;
+					break;
+				default:
+					break;
+			}
+			View.screenHistory.innerHTML = histStr + '=';
+			let resStr = View.roundUp(Controller.getResult());
+			View.float = resStr.includes('e');
+			View.negativeSign = resStr[0] === '-';
+			View.disabled = resStr.length === (10 + View.float + View.negativeSign);
+			View.screenCurrent.textContent = resStr;
+		} else {
+			View.disabled = false;
+			View.float = false;
+			let num = View.screenCurrent.textContent;
+			View.screenHistory.textContent = num + operation.textContent;
+			Controller.saveNumber(parseFloat(num), operation);
+			View.screenCurrent.textContent = '0';
+		}
 	},
 }
 
@@ -178,8 +221,16 @@ const Controller = {
 		}
 	},
 
+	getA() {
+		return this.calculator.numA;
+	},
+
+	getB() {
+		return this.calculator.numB;
+	},
+
 	getResult() {
-		this.calculator[this.currentOperation]();
+		this.calculator[this.currentOperation.id]();
 		return this.calculator.resultC;
 	},
 
