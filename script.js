@@ -66,7 +66,7 @@ const View = {
 	},
 
 	onOperatorClick (event) {
-		this.enterOperator(event.target);
+		View.enterOperator(event.target);
 	},
 
 	onEqualsClick () {
