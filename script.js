@@ -32,6 +32,7 @@ const View = {
 	dotButton: document.querySelector('#dot'),
 
 	init () {
+		window.addEventListener('keydown', this.onKeyPress);
 		this.operatorButtons.forEach(button => {
 			button.addEventListener('click', this.onOperatorClick);
 		});
@@ -47,72 +48,33 @@ const View = {
 		return this;
 	},
 
+	onKeyPress (event) {
+		console.log(event.key);
+		const key = event.key;
+		if (key === '.') {
+			View.enterDot();
+		} else if (key.match(/^[0-9]/)) {
+			View.enterNumber(key);
+		} else if (key === 'Backspace') {
+			View.deleteLast();
+		} else if (key === '=' || key === 'Enter') {
+			View.enterEquals();
+		} else if (key.match(/^[+|\-|*|/|^|`]/)) {
+			const button = document.querySelector(`.operator[data-key="${key}"]`);
+			View.enterOperator(button);
+		}
+	},
+
 	onOperatorClick (event) {
-		if (View.screenCurrent.textContent === 'Error') {
-			return;
-		}
-		if (event.target.classList.contains('unary')) {
-			View.saveA();
-			View.saveOperand(event.target);
-			View.writeResult();
-			return;
-		}
-		if (View.screenHistory.textContent.match(/\+|−|×|÷/g) && !View.screenHistory.textContent.includes('=')) {
-			View.saveB();
-			View.writeResult();
-		}
-		View.saveA();
-		View.saveOperand(event.target);
-		View.screenCurrent.textContent = '0';
-		View.updateFlags();
+		this.enterOperator(event.target);
 	},
 
 	onEqualsClick () {
-		if (Controller.currentOperation === undefined || View.screenCurrent.textContent === 'Error') {
-			return;
-		}
-		if (View.screenHistory.textContent.includes('=')) {
-			if (Controller.currentOperation.classList.contains('unary')) {
-				View.screenHistory.textContent = View.screenCurrent.textContent;
-				View.screenHistory.textContent += '=';
-				return;
-			}
-			View.saveA();
-			View.saveOperand(Controller.currentOperation);
-			View.screenHistory.textContent += Controller.getB();
-			View.writeResult();
-		} else {
-			View.saveB();
-			View.writeResult();
-		}
+		View.enterEquals();
 	},
 
 	onDelete () {
-		if (View.screenHistory.textContent.includes('=')) {
-			View.screenHistory.textContent = '';
-			Controller.currentOperation = undefined;
-			return;
-		}
-		if (View.screenCurrent.textContent === 'Error') {
-			View.screenCurrent.textContent = '0';
-			View.updateFlags();
-			return;
-		}
-		if (View.screenCurrent.textContent === '0') {
-			if (!View.screenHistory.textContent.slice(-1).match(/\d/g)) {
-				View.screenHistory.textContent = View.screenHistory.textContent.slice(0, -1);
-				Controller.currentOperation = undefined;
-				View.screenCurrent.textContent = View.screenHistory.textContent;
-				View.screenHistory.textContent = '';
-				View.updateFlags();
-			}
-			return;
-		}
-		View.screenCurrent.textContent = View.screenCurrent.textContent.slice(0, -1);
-		if (View.screenCurrent.textContent.length === 0) {
-			View.screenCurrent.textContent = '0';
-		}
-		View.updateFlags();
+		View.deleteLast();
 	},
 
 	onDeleteAll () {
@@ -125,27 +87,11 @@ const View = {
 	},
 
 	onNumClick (event) {
-		if (View.disabled) {
-			return;
-		}
-		if (View.screenCurrent.textContent === '0') {
-			View.screenCurrent.textContent = `${event.target.dataset.num}`;
-		} else if (View.screenCurrent.textContent.length === (10 + View.float + View.negativeSign)) {
-			View.disabled = true;
-		} else {
-			View.screenCurrent.textContent += `${event.target.dataset.num}`;
-		}
+		View.enterNumber(event.target.dataset.num);
 	},
 
 	onDotClick () {
-		if (View.disabled || View.float) {
-			return;
-		}
-		if (View.screenCurrent.textContent === '-') {
-			View.screenCurrent.textContent += '0';
-		}
-		View.screenCurrent.textContent += '.';
-		View.float = true;
+		View.enterDot();
 	},
 
 	onChangeSignClick () {
@@ -181,8 +127,8 @@ const View = {
 		View.updateFlags();
 	},
 
-	saveOperand (operand) {
-		switch (operand.id) {
+	saveOperator (operator) {
+		switch (operator.id) {
 		case 'square':
 			View.screenHistory.innerHTML += '<sup>2</sup>';
 			break;
@@ -190,10 +136,10 @@ const View = {
 			View.screenHistory.innerHTML = '&radic;' + View.screenHistory.textContent;
 			break;
 		default:
-			View.screenHistory.textContent += operand.textContent;
+			View.screenHistory.textContent += operator.textContent;
 			break;
 		}
-		Controller.currentOperation = operand;
+		Controller.currentOperation = operator;
 	},
 
 	writeResult () {
@@ -206,6 +152,98 @@ const View = {
 		const resStr = View.roundUp(Controller.getResult());
 		View.screenCurrent.textContent = resStr;
 		View.updateFlags();
+	},
+
+	enterOperator (operatorObject) {
+		if (View.screenCurrent.textContent === 'Error') {
+			return;
+		}
+		if (operatorObject.classList.contains('unary')) {
+			View.saveA();
+			View.saveOperator(operatorObject);
+			View.writeResult();
+			return;
+		}
+		if (View.screenHistory.textContent.match(/\+|−|×|÷/) && !View.screenHistory.textContent.includes('=')) {
+			View.saveB();
+			View.writeResult();
+		}
+		View.saveA();
+		View.saveOperator(operatorObject);
+		View.screenCurrent.textContent = '0';
+		View.updateFlags();
+	},
+
+	enterEquals () {
+		if (Controller.currentOperation === undefined || View.screenCurrent.textContent === 'Error') {
+			return;
+		}
+		if (View.screenHistory.textContent.includes('=')) {
+			if (Controller.currentOperation.classList.contains('unary')) {
+				View.screenHistory.textContent = View.screenCurrent.textContent;
+				View.screenHistory.textContent += '=';
+				return;
+			}
+			View.saveA();
+			View.saveOperator(Controller.currentOperation);
+			View.screenHistory.textContent += Controller.getB();
+			View.writeResult();
+		} else {
+			View.saveB();
+			View.writeResult();
+		}
+	},
+
+	deleteLast () {
+		if (View.screenHistory.textContent.includes('=')) {
+			View.screenHistory.textContent = '';
+			Controller.currentOperation = undefined;
+			return;
+		}
+		if (View.screenCurrent.textContent === 'Error') {
+			View.screenCurrent.textContent = '0';
+			View.updateFlags();
+			return;
+		}
+		if (View.screenCurrent.textContent === '0') {
+			if (!View.screenHistory.textContent.slice(-1).match(/[0-9]/)) {
+				View.screenHistory.textContent = View.screenHistory.textContent.slice(0, -1);
+				Controller.currentOperation = undefined;
+				View.screenCurrent.textContent = View.screenHistory.textContent;
+				View.screenHistory.textContent = '';
+				View.updateFlags();
+			}
+			return;
+		}
+		View.screenCurrent.textContent = View.screenCurrent.textContent.slice(0, -1);
+		if (View.screenCurrent.textContent.length === 0) {
+			View.screenCurrent.textContent = '0';
+		}
+		View.updateFlags();
+	},
+
+	enterNumber (num) {
+		if (View.disabled) {
+			return;
+		}
+		if (View.screenCurrent.textContent === '0') {
+			View.screenCurrent.textContent = `${num}`;
+		} else if (View.screenCurrent.textContent.length === (10 + View.float + View.negativeSign)) {
+			View.disabled = true;
+		} else {
+			View.screenCurrent.textContent += `${num}`;
+		}
+	},
+
+	enterDot () {
+		if (View.disabled || View.float) {
+			return;
+		}
+		if (View.screenCurrent.textContent === '-') {
+			View.screenCurrent.textContent += '0';
+		}
+		View.screenCurrent.textContent += '.';
+		View.float = true;
 	},
 
 	roundUp (num) {
